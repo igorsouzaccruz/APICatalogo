@@ -1,25 +1,32 @@
 ﻿using APICatalogo.Context;
 using APICatalogo.Models;
+using APICatalogo.Repository;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
 namespace APICatalogo.Controllers
 {
-    [Route("[controller]")]
+    [Route("api/[controller]")]
     [ApiController]
     public class ProdutosController : ControllerBase
     {
-        private readonly AppDbContext _context;
-        public ProdutosController(AppDbContext context)
+        private readonly IUnitOfWork _uof;
+        public ProdutosController(IUnitOfWork context)
         {
-            _context = context;
+            _uof = context; 
+        }
+
+        [HttpGet("menorpreco")]
+        public ActionResult<IEnumerable<Produto>> GetProdutosPorPreco()
+        {
+            return _uof.ProdutoRepository.GetProdutosPorPreco().ToList();
         }
 
         [HttpGet]
         public ActionResult<IEnumerable<Produto>> Get()
         {
-            var produtos = _context.Produtos.AsNoTracking().ToList();
+            var produtos = _uof.ProdutoRepository.Get().ToList();
 
             if(produtos is null)
             {
@@ -32,7 +39,8 @@ namespace APICatalogo.Controllers
         [HttpGet("{id:int}", Name="ObterProduto")]
         public ActionResult<Produto> Get(int id)
         {
-            var produto = _context.Produtos.FirstOrDefault(p => p.ProdutoId == id);
+            var produto = _uof.ProdutoRepository.GetById(p => p.ProdutoId == id);
+
             if(produto is null)
             {
                 return NotFound("Produto não encontrado...");
@@ -48,38 +56,37 @@ namespace APICatalogo.Controllers
                 return BadRequest();
             }
 
-            _context.Produtos.Add(produto);
-            _context.SaveChanges();
+            _uof.ProdutoRepository.Add(produto);
+            _uof.Commit();
 
             return new CreatedAtRouteResult("ObterProduto",
                 new { id = produto.ProdutoId }, produto);
         }
 
         [HttpPut("{id:int}")]
-        public ActionResult Put(int id, Produto produto)
+        public ActionResult Put(int id,[FromBody] Produto produto)
         {
             if(id != produto.ProdutoId)
             {
                 return BadRequest();
             }
 
-            _context.Entry(produto).State = EntityState.Modified;
-            _context.SaveChanges();
-
+            _uof.ProdutoRepository.Update(produto);
+            _uof.Commit();
             return Ok(produto);
         }
 
         [HttpDelete("{id:int}")]
         public ActionResult Delete(int id)
         {
-            var produto = _context.Produtos.FirstOrDefault(p => p.ProdutoId == id);
+            var produto = _uof.ProdutoRepository.GetById(p => p.ProdutoId == id);
 
             if(produto is null)
             {
                 return NotFound();
             }
-            _context.Produtos.Remove(produto);
-            _context.SaveChanges();
+            _uof.ProdutoRepository.Delete(produto);
+            _uof.Commit();
 
             return Ok(produto);
         }
