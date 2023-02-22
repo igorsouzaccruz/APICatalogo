@@ -22,6 +22,7 @@ builder.Services.AddDbContext<AppDbContext>(options =>
                     ServerVersion.AutoDetect(mySqlConnection)));
 
 builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
+builder.Services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
 
 var app = builder.Build();
 
