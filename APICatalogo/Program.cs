@@ -6,10 +6,14 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
+using Microsoft.OpenApi.Models;
+using System.Reflection;
 using System.Text;
 using System.Text.Json.Serialization;
 
 var builder = WebApplication.CreateBuilder(args);
+
+
 
 builder.Services.AddControllers()
     .AddJsonOptions(options =>
@@ -17,7 +21,35 @@ builder.Services.AddControllers()
         . ReferenceHandler = ReferenceHandler.IgnoreCycles);
 
 builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen();
+builder.Services.AddSwaggerGen(c =>
+{
+    c.SwaggerDoc("v1", new OpenApiInfo { Title = "APICatalago",Version = "v1" });
+
+    c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme()
+    {
+        Name = "Authorization",
+        Type = SecuritySchemeType.ApiKey,
+        Scheme = "Bearer",
+        BearerFormat = "JWT",
+        In = ParameterLocation.Header,
+        Description = "Header de autorização JWT usando o esquema Bearer. \r\n\r\nInforme 'Bearer[espaço] e o seu token. \r\n\r\nExemplo: \'Bearer 12345abcdef\'",
+    });
+
+    c.AddSecurityRequirement(new OpenApiSecurityRequirement()
+    {
+        {
+            new OpenApiSecurityScheme
+            {
+                Reference = new OpenApiReference
+                {
+                    Type = ReferenceType.SecurityScheme,
+                    Id = "Bearer"
+                }
+            },
+            new string[] {}
+        }
+    });
+});
 
 string mySqlConnection = builder.Configuration.GetConnectionString("DefaultConnection");
 
@@ -40,9 +72,9 @@ builder.Services.AddAuthentication(
             ValidateIssuer = true,
             ValidateAudience = true,
             ValidateLifetime = true,
-            ValidAudience = builder.Configuration["TokenConfiguraton:Audience"],
-            ValidIssuer = builder.Configuration["TokenConfiguration:Issuer"],
             ValidateIssuerSigningKey = true,
+            ValidAudience = builder.Configuration["TokenConfiguration:Audience"],
+            ValidIssuer = builder.Configuration["TokenConfiguration:Issuer"],
             IssuerSigningKey = new SymmetricSecurityKey(
                 Encoding.UTF8.GetBytes(builder.Configuration["Jwt:key"]))
         });
@@ -58,6 +90,8 @@ IMapper mapper = mappingConfig.CreateMapper();
 
 builder.Services.AddSingleton(mapper);
 
+builder.Services.AddCors();
+
 var app = builder.Build();
 
 if (app.Environment.IsDevelopment())
@@ -71,6 +105,8 @@ app.UseHttpsRedirection();
 app.UseRouting();
 app.UseAuthentication();
 app.UseAuthorization();
+
+app.UseCors(opt => opt.AllowAnyOrigin());
 
 app.MapControllers();
 
