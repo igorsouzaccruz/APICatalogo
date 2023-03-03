@@ -13,20 +13,40 @@ using System.Text;
 using System.Text.Json.Serialization;
 
 var builder = WebApplication.CreateBuilder(args);
-
-
-
+ 
 builder.Services.AddControllers()
     .AddJsonOptions(options =>
         options.JsonSerializerOptions
-        . ReferenceHandler = ReferenceHandler.IgnoreCycles);
+        .ReferenceHandler = ReferenceHandler.IgnoreCycles);
 
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(c =>
 {
-    c.SwaggerDoc("v1", new OpenApiInfo { Title = "APICatalago",Version = "v1" });
+    c.SwaggerDoc("v1", new OpenApiInfo
+    {
+        Version = "v1",
+        Title = "APICatalago",
+        Description = "Catálogo de Produtos e Categorias",
+        TermsOfService = new Uri("https://macoratti.net/terms"),
+        Contact = new OpenApiContact
+        {
+            Name = "Igor",
+            Email = "igor@gmail.com",
+            Url = new Uri("https://macoratti.net/"),
+        },
+        License = new OpenApiLicense
+        {
+            Name= "Usar sobre Licx",
+            Url = new Uri("https://macoratti.net/"),
+        }
+    });
 
-    c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme()
+    var xmlFile = $"{Assembly.GetExecutingAssembly().GetName().Name}.xml";
+    var xmlPath = Path.Combine(AppContext.BaseDirectory, xmlFile);
+    c.IncludeXmlComments(xmlPath);
+
+
+c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme()
     {
         Name = "Authorization",
         Type = SecuritySchemeType.ApiKey,
@@ -36,7 +56,7 @@ builder.Services.AddSwaggerGen(c =>
         Description = "Header de autorização JWT usando o esquema Bearer. \r\n\r\nInforme 'Bearer[espaço] e o seu token. \r\n\r\nExemplo: \'Bearer 12345abcdef\'",
     });
 
-    c.AddSecurityRequirement(new OpenApiSecurityRequirement()
+ c.AddSecurityRequirement(new OpenApiSecurityRequirement()
     {
         {
             new OpenApiSecurityScheme
@@ -80,13 +100,13 @@ builder.Services.AddAuthentication(
                 Encoding.UTF8.GetBytes(builder.Configuration["Jwt:key"]))
         });
 
-builder.Services.AddApiVersioning(options =>
-{
-    options.AssumeDefaultVersionWhenUnspecified = true;
-    options.DefaultApiVersion = new Microsoft.AspNetCore.Mvc.ApiVersion(1, 0);
-    options.ReportApiVersions= true;
-    options.ApiVersionReader = new HeaderApiVersionReader("x-api-version");
-});
+//builder.Services.AddApiVersioning(options =>
+//{
+//    options.AssumeDefaultVersionWhenUnspecified = true;
+//    options.DefaultApiVersion = new Microsoft.AspNetCore.Mvc.ApiVersion(1, 0);
+//    options.ReportApiVersions = true;
+//    options.ApiVersionReader = new HeaderApiVersionReader("x-api-version");
+//});
 
 builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 
@@ -106,7 +126,11 @@ var app = builder.Build();
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
-    app.UseSwaggerUI();
+    app.UseSwaggerUI(c =>
+    {
+        c.SwaggerEndpoint("/swagger/v1/swagger.json",
+            "Cátalogo de Produtos e Categorias");
+    });
 }
 
 app.UseHttpsRedirection();
@@ -114,6 +138,7 @@ app.UseHttpsRedirection();
 app.UseRouting();
 app.UseAuthentication();
 app.UseAuthorization();
+
 
 app.UseCors(opt => opt.AllowAnyOrigin());
 

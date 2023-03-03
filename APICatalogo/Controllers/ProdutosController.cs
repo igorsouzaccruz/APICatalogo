@@ -11,6 +11,8 @@ using System.Text.Json.Serialization;
 
 namespace APICatalogo.Controllers
 {
+    [ApiConventionType(typeof(DefaultApiConventions))]
+    [Produces("application/json")]
     [Route("api/[controller]")]
     [ApiController]
     [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
@@ -32,7 +34,12 @@ namespace APICatalogo.Controllers
 
             return produtosDto;
         }
-
+        /// <summary>
+        /// Exibe uma relação dos produtos
+        /// </summary>
+        /// <param name="produtosParameters"></param>
+        /// <returns>Retorna uma lista de objetos Produto</returns>
+        /// api/produtos
         [HttpGet]
         public async Task<ActionResult<IEnumerable<ProdutoDTO>>>
             Get([FromQuery] ProdutosParameters produtosParameters)
@@ -61,7 +68,12 @@ namespace APICatalogo.Controllers
 
             return produtosDto;
         }
-
+        /// <summary>
+        /// Obtem um produto pelo seu identificador produtoId
+        /// </summary>
+        /// <param name="id">Código do produto</param>
+        /// <returns>Um objeto Produto</returns>
+        /// api/produtos/1
         [HttpGet("{id:int}", Name="ObterProduto")]
         public async Task<ActionResult<ProdutoDTO>> Get(int id)
         {

@@ -10,6 +10,7 @@ using System.Text.Json;
 
 namespace APICatalogo.Controllers
 {
+    [Produces("application/json")]
     [Route("api/[controller]")]
     [ApiController]
     [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
@@ -57,7 +58,14 @@ namespace APICatalogo.Controllers
             return categoriasDto;
         }
 
+        /// <summary>
+        /// Obtem uma Ctegoria pelo seu ID
+        /// </summary>
+        /// <param name="id"></param>
+        /// <returns>Objetos Categoria</returns>
         [HttpGet("{id:int}", Name = "ObterCategoria")]
+        [ProducesResponseType(typeof(ProdutoDTO),StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
         public async Task<ActionResult<CategoriaDTO>> Get(int id)
         {
             try
@@ -78,8 +86,24 @@ namespace APICatalogo.Controllers
                                    "Ocorreu um problema ao tratar a sua solicitação");
             }
         }
-
+        /// <summary>
+        /// Incui uma nova categoria
+        /// </summary>
+        /// <remarks>
+        /// Exemplo de request:
+        ///     POST api/categorias
+        ///     {
+        ///         "categoriaId": 1,
+        ///         "nome": "categoria1",
+        ///         "imageUrl":"http://teste.net/.jpg"
+        ///     }
+        /// </remarks>
+        /// <param name="categoriaDTO">objeto Categoria</param>
+        /// <returns>O objeto Categoria incluida</returns>
+        /// <remarks>Retorna um objeto Categoria incluido</remarks>
         [HttpPost]
+        [ProducesResponseType(StatusCodes.Status201Created)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
         public async Task<ActionResult> Post([FromBody] CategoriaDTO categoriaDTO)
         {
             var categoria = _mapper.Map<Categoria>(categoriaDTO);
@@ -96,6 +120,7 @@ namespace APICatalogo.Controllers
         }
 
         [HttpPut("{id:int}")]
+        [ApiConventionMethod(typeof(DefaultApiConventions),nameof(DefaultApiConventions.Put))]
         public async Task<ActionResult> Put(int id,[FromBody] CategoriaDTO categoriaDto)
         {
             if (id != categoriaDto.CategoriaId)
