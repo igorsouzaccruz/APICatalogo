@@ -34,9 +34,9 @@ namespace APICatalogo.Controllers
             return categoriasDto;
         }
 
-        [HttpGet]
+        [HttpGet("paginacao")]
         public async Task<ActionResult<IEnumerable<CategoriaDTO>>> 
-            Get([FromBody] CategoriasParameters categoriasParameters)
+            GetPaginacao([FromBody] CategoriasParameters categoriasParameters)
         {
             var categorias = await _context.CategoriaRepository.
                             GetCategorias(categoriasParameters);
